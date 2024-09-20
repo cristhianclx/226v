@@ -11,3 +11,27 @@ deactivate # desactivas el entorno virtual
 flask --app main db init # inicializa la base de datos
 flask --app main db migrate # crea la migración
 flask --app main db upgrade # aplicar la migración
+
+flask --app main shell
+
+>>> from main import User, db
+>>> user_1 = User(first_name="Cristhian", last_name="Cueva", age=35, city="Huancayo")
+>>> db.session.add(user_1)
+>>> db.session.commit()
+
+>>> from main import User, db
+>>> User.query.all()
+
+>>> from main import db, User
+>>> User.query.get_or_404(1)
+
+>>> from main import User, db
+>>> user = User.query.filter_by(id=1).first()
+>>> user.age = 34
+>>> db.session.add(user)
+>>> db.session.commit()
+
+>>> from main import db, User
+>>> user = User.query.filter_by(id=1).first()
+>>> db.session.delete(user)
+>>> db.session.commit()
