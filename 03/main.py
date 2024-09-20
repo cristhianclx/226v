@@ -33,6 +33,8 @@ class Message(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     content = db.Column(db.String(255))
+    # priority (1, 2, 3, 4, 5)
+    # importance (high, low, medium)
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
@@ -99,3 +101,10 @@ def users_delete_by_id(id):
         db.session.delete(user_data)
         db.session.commit()
         return redirect(url_for('users'))
+    
+
+# /messages
+# /messages/add
+# /messages/<id>
+# /messages/edit/<id>
+# /messages/delete/<id>
