@@ -32,24 +32,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
     def __repr__(self):
-        return "<User {}>".format(self.id)
-    
-
-class Message(db.Model):
-
-    __tablename__ = "messages"
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    content = db.Column(db.String(255))
-    priority = db.Column(db.String(1))
-    importance = db.Column(db.String(10))
-    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
-
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    user = db.relationship("User", backref="user")
-
-    def __repr__(self):
-        return "<Message {}>".format(self.id)
+        return "<User {}>".format(self.id)    
 
 
 class UserForTableSchema(ma.Schema):
@@ -82,6 +65,42 @@ class UserSchema(ma.Schema):
 
 user_schema = UserSchema()
 users_schema = UserSchema(many = True)
+
+
+class Message(db.Model):
+
+    __tablename__ = "messages"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    content = db.Column(db.String(255))
+    priority = db.Column(db.String(1))
+    importance = db.Column(db.String(10))
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    user = db.relationship("User", backref="user")
+
+    def __repr__(self):
+        return "<Message {}>".format(self.id)
+
+
+class MessageSchema(ma.Schema):
+    user = ma.Nested(UserForTableSchema)
+    class Meta:
+        fields = (
+            "id",
+            "content",
+            "priority",
+            "importance",
+            "created_at",
+            "user",
+        )
+        model = Message
+        datetimeformat = "%Y-%m-%d %H:%M:%S"
+
+
+message_schema = MessageSchema()
+messages_schema = MessageSchema(many = True)
 
 
 class PINGResource(Resource):
@@ -134,16 +153,15 @@ class UserIDResource(Resource):
         return {}, 204
 
 
+class MessagesByUserResource(Resource):
+    def get(self, user_id):
+        user = User.query.get_or_404(user_id)
+        messages = Message.query.filter_by(user = user).all()
+        return messages_schema.dump(messages)
+
+
 api.add_resource(PINGResource, "/ping")
 api.add_resource(UsersForTableResource, "/users-for-table")
 api.add_resource(UsersResource, "/users")
 api.add_resource(UserIDResource, "/users/<int:id>")
-
-
-# GET /messages 
-# POST /messages 
-# GET /messages/<int:id> 
-# PATCH /messages/<int:id> 
-# DELETE /messages/<int:id>
-
-# GET /messages-by-user/<int:user_id> 
+api.add_resource(MessagesByUserResource, "/messages-by-user/<int:user_id>")
