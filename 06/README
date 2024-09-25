@@ -1,0 +1,54 @@
+# comandos
+
+python3 -m venv venv # crea el entorno virtual (unica vez)
+venv\Scripts\activate.bat # activar el entorno virtual
+pip install -r requirements.txt --upgrade # instalar los paquetes
+
+flask --app main run --reload # correr el proyecto
+
+deactivate # desactivas el entorno virtual
+
+flask --app main run --reload # correr el proyecto
+
+deactivate # desactivas el entorno virtual
+
+flask --app main db init # inicializa la base de datos
+flask --app main db migrate # crea la migración
+flask --app main db upgrade # aplicar la migración
+
+flask --app main shell
+
+
+# esto es para convertir el txt en sqlite
+
+import sqlite3
+import pandas as pd
+
+df = pd.read_csv(
+    "data.txt",
+    delimiter="|",
+    encoding="latin1",
+    usecols=[0, 1, 2, 3],
+    dtype={
+        "id": str,
+        "name": str,
+        "state": str,
+        "condition": str,
+    }
+)
+df.columns = [
+    "id",
+    "name",
+    "state",
+    "condition",
+]
+
+db_filename = "raw.db"
+connection = sqlite3.connect(db_filename)
+df.to_sql(
+    "enterprises",
+    connection,
+    if_exists="replace",
+    index=False,
+)
+connection.close()
