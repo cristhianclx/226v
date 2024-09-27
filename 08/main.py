@@ -64,6 +64,7 @@ def handle_messages(data):
     socketio.emit("messages-responses", message_schema.dump(message))
 
 
-# http://127.0.0.1:5000/conversations/abcde
-# Message -> añadir el campo conversation
-# Message -> (importance), low, high, si es high mostrar una etiqueta que diga high
+# (1) http://127.0.0.1:5000/conversations/abcde
+#     # crear model Conversation
+#     Message -> añadir el campo conversation
+# (2) Message -> (importance), low, high, si es high mostrar una etiqueta que diga high
