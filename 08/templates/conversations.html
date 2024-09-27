@@ -16,14 +16,21 @@
                 e.preventDefault();
                 let nickname = $("#nickname").val();
                 let message = $("#message").val();
+                let importance = $("#importance").val();
                 socket.emit("messages", {
+                    conversation_id: "{{ id  }}",  
                     nickname: nickname,
                     message: message,
+                    importance: importance,
                 })
             })
         });
-        socket.on("messages-responses", function(msg) {
-            $("#messages").append("<p><b>" + msg.nickname + ":</b> " + msg.message + " <small>(" + msg.created_at +")</small></p>")
+        socket.on("messages-responses-{{ id }}", function(msg) {
+            if (msg.importance == "high") {
+              $("#messages").append("<p><b>" + msg.nickname + ":</b> " + msg.message + " <small>(" + msg.created_at +")</small> <span class='badge text-bg-danger'>High</span></p>")
+            } else {
+              $("#messages").append("<p><b>" + msg.nickname + ":</b> " + msg.message + " <small>(" + msg.created_at +")</small></p>")
+            }
         })
     </script>
 </head>
@@ -38,13 +45,21 @@
             <label class="form-label">Message</label>
             <input type="text" class="form-control" name="message" id="message" />
           </div>
+          <div class="mb-3">
+            <label class="form-label">Importance</label>
+            <input type="text" class="form-control" name="importance" id="importance" />
+          </div>
         <button type="submit" class="btn btn-primary">Send message</button>
       </form>
       <hr>
       <h2>Messages</h2>
       <div id="messages">
         {% for message in messages %}
+        {% if message.importance == "high" %}
+        <p><b>{{ message.nickname }}:</b> {{ message.message }} <small>({{ message.created_at }})</small> <span class="badge text-bg-danger">High</span></p>
+        {% else %}
         <p><b>{{ message.nickname }}:</b> {{ message.message }} <small>({{ message.created_at }})</small></p>
+        {% endif %}
         {% endfor %}
       </div>
   </body>

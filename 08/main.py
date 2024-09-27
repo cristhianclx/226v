@@ -18,11 +18,23 @@ ma = Marshmallow(app)
 socketio = SocketIO(app)
 
 
+class Conversation(db.Model):
+    id = db.Column(db.String, primary_key=True)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+
+    def __repr__(self):
+        return f"<Conversation {self.id}>"
+
+
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nickname = db.Column(db.Text, nullable=False)
     message = db.Column(db.Text, nullable=False)
+    importance = db.Column(db.String(10), nullable=True, default="low")
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+
+    conversation_id = db.Column(db.Integer, db.ForeignKey("conversation.id"))
+    conversation = db.relationship("Conversation", backref="conversation")
 
     def __repr__(self):
         return f"<Message {self.id}>"
@@ -34,6 +46,7 @@ class MessageSchema(ma.Schema):
             "id",
             "nickname",
             "message",
+            "importance",
             "created_at",
         )
         model = Message
@@ -46,8 +59,18 @@ messages_schema = MessageSchema(many = True)
 
 @app.route("/")
 def index():
-    messages = Message.query.all()
-    return render_template("index.html", messages=messages)
+    return {}
+
+
+@app.route("/conversations/<id>")
+def conversations(id):
+    conversation = Conversation.query.filter_by(id = id).first()
+    if not conversation:
+        conversation = Conversation(id = id)
+        db.session.add(conversation)
+        db.session.commit()
+    messages = Message.query.filter_by(conversation = conversation)
+    return render_template("conversations.html", id=id, messages=messages)
 
 
 @socketio.on("welcome")
@@ -61,10 +84,4 @@ def handle_messages(data):
     message = Message(**data)
     db.session.add(message)
     db.session.commit()
-    socketio.emit("messages-responses", message_schema.dump(message))
-
-
-# (1) http://127.0.0.1:5000/conversations/abcde
-#     # crear model Conversation
-#     Message -> añadir el campo conversation
-# (2) Message -> (importance), low, high, si es high mostrar una etiqueta que diga high
+    socketio.emit("messages-responses-{}".format(message.conversation_id), message_schema.dump(message))
