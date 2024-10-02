@@ -15,16 +15,64 @@ flask --app main db upgrade # aplicar la migración
 flask --app main shell
 
 
-# Joke: id, url, duration (seconds), artist, show 
-# Artist: id, name
-# Show: id, name, city
 
-# /jokes: CRUD
-# /artists: CRUD
-# /shows: CRUD
 
-# POST /jokes/like
-# POST /jokes/dislike
+rows = []
 
-# GET /jokes/best (3 mejores)
-# GET /jokes/worst (3 peores)
+import csv
+
+with open('shows.csv') as csv_file:
+    csv_reader = csv.reader(csv_file)
+    csv_header = next(csv_reader)
+    for row in csv_reader:
+        rows.append(row)
+
+from main import db, Show
+
+for row in rows:
+    show = Show(id = int(row[0]), title = row[1])
+    db.session.add(show)
+    db.session.commit()
+
+
+
+rows = []
+
+import csv
+
+with open('comedians.csv') as csv_file:
+    csv_reader = csv.reader(csv_file)
+    csv_header = next(csv_reader)
+    for row in csv_reader:
+        rows.append(row)
+
+from main import db, Artist
+
+for row in rows:
+    artist = Artist(id = int(row[0]), name = row[2])
+    db.session.add(artist)
+    db.session.commit()
+
+
+
+
+
+rows = []
+
+import csv
+
+with open('jokes.csv') as csv_file:
+    csv_reader = csv.reader(csv_file)
+    csv_header = next(csv_reader)
+    for row in csv_reader:
+        rows.append(row)
+
+from main import db, Joke
+
+for row in rows:
+    joke = Joke(
+        event_name = row[2],
+        show_id = int(row[1]),
+    )
+    db.session.add(joke)
+    db.session.commit()
