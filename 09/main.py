@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_restful import Resource, Api
@@ -19,6 +19,21 @@ class Show(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(255))
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+
+
+class ShowSchema(ma.Schema):
+    class Meta:
+        fields = (
+            'id',
+            'title',
+            'created_at',
+        )
+        model = Show
+        datetimeformat = "%Y-%m-%d %H:%M:%S"
+
+
+show_schema = ShowSchema()
+shows_schema = ShowSchema(many = True)
 
 
 class Artist(db.Model):
@@ -54,6 +69,39 @@ class JokeSchema(ma.Schema):
 
 joke_schema = JokeSchema()
 jokes_schema = JokeSchema(many=True)
+
+
+class ShowsResource(Resource):
+    def get(self):
+        shows = Show.query.all()
+        return shows_schema.dump(shows)
+
+    def post(self):
+        data = request.get_json()
+        show = Show(**data)
+        db.session.add(show)
+        db.session.commit()
+        return show_schema.dump(show), 201
+
+
+class ShowIDResource(Resource):
+    def get(self, id):
+        show = Show.query.get_or_404(id)
+        return show_schema.dump(show)
+
+    def patch(self, id):
+        show = Show.query.get_or_404(id)
+        data = request.get_json()
+        show.title = data.get("title", show.title)
+        db.session.add(show)
+        db.session.commit()
+        return show_schema.dump(show)
+
+    def delete(self, id):
+        show = Show.query.get_or_404(id)
+        db.session.delete(show)
+        db.session.commit()
+        return {}, 204
 
 
 class JokeResource(Resource):
@@ -98,6 +146,8 @@ class JokesWorstResource(Resource):
         return jokes_schema.dump(jokes)
 
 
+api.add_resource(ShowsResource, "/shows") # GET, POST
+api.add_resource(ShowIDResource, "/shows/<int:id>") # GET, PATCH, DELETE
 api.add_resource(JokesBestResource, "/jokes/best")
 api.add_resource(JokesWorstResource, "/jokes/worst")
 api.add_resource(JokeResource, "/jokes/<int:id>")
